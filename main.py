@@ -4,11 +4,22 @@ import shutil
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import datetime
-# A. 
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+# Callaback
 fc_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 fc_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=fc_log_dir, histogram_freq=1)
 cnn_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 cnn_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=cnn_log_dir, histogram_freq=1)
+
+# Early stopping callback
+early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+
+# Model checkpoint callback
+checkpoint = ModelCheckpoint('models/best_fc_model.h5', save_best_only=True, monitor='val_accuracy')
+
+
+#=============
+# A. 
 base_dir = './'
 dataset_dir = 'dataset'
 
@@ -90,6 +101,17 @@ validation_generator = validation_datagen.flow_from_directory(
     class_mode='binary'
 )
 print(tf.config.list_physical_devices('GPU'))
+
+# Inspect the generator
+"""
+sample_batch, sample_labels = validation_generator.next()
+for i in range(4):  # Display the first 4 images in the batch
+    plt.subplot(2, 2, i + 1)
+    plt.imshow(sample_batch[i])
+    plt.title(f"Label: {sample_labels[i]}")
+plt.show()
+exit()
+"""
 # d) Design and build TWO deep-learning models
 
 # Model 1: Fully-connected network model
@@ -122,13 +144,27 @@ model_cnn = tf.keras.Sequential([
 # e) Set up optimization, learning rate, batch size, and epoch numbers for both models
 
 # Model 1
-model_fc.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=20,callbacks=[fc_tensorboard_callback])
+# Define a learning rate schedule (you can customize this schedule)
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate=1e-2,  # Starting learning rate
+    decay_steps=10000,           # Learning rate decay steps
+    decay_rate=0.9               # Learning rate decay rate
+)
+
+# Create an optimizer with the learning rate schedule
+optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+
+model_fc.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=40,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
+# Save Model fc
+model_fc.save(f'models/fc_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
+
 
 # Model 2
 model_cnn.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=20,callbacks=[cnn_tensorboard_callback])
-
+history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=40,callbacks=[cnn_tensorboard_callback])
+# Save model cnn
+model_cnn.save(f'models/cnn_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
 # f) Calculate and discuss accuracy for both models
 
 # Model 1 accuracy
@@ -138,5 +174,4 @@ print(f"Model 1 Validation Accuracy: {val_acc_fc:.2f}")
 # Model 2 accuracy
 val_loss_cnn, val_acc_cnn = model_cnn.evaluate(validation_generator)
 print(f"Model 2 Validation Accuracy: {val_acc_cnn:.2f}")
-
 #i
