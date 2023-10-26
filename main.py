@@ -1,0 +1,142 @@
+import os
+import random
+import shutil
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import datetime
+# A. 
+fc_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+fc_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=fc_log_dir, histogram_freq=1)
+cnn_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+cnn_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=cnn_log_dir, histogram_freq=1)
+base_dir = './'
+dataset_dir = 'dataset'
+
+train_dir = os.path.join(base_dir, 'train')
+validation_dir = os.path.join(base_dir, 'validation')
+
+dog_train_dir = os.path.join(train_dir,"dog")
+cat_train_dir = os.path.join(train_dir,"cat")
+
+dog_validation_dir = os.path.join(validation_dir,"dog")
+cat_validation_dir = os.path.join(validation_dir,"cat")
+
+# Create directories for training and validation data
+for path in [train_dir,
+             validation_dir,
+             dog_train_dir,
+             cat_train_dir,
+             dog_validation_dir,
+             cat_validation_dir]:
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+# Collect all image files in the 'dataset' directory
+image_files = os.listdir(dataset_dir)
+print(len(image_files))
+# Randomly select 8,000 dog and 8,000 cat images for training
+random.shuffle(image_files)
+
+dog_train_count = len(os.listdir(dog_train_dir))
+cat_train_count = len(os.listdir(cat_train_dir))
+print(f"dog:{dog_train_count} \n cat:{cat_train_count}")
+
+# Move the first 8,000 dog and 8,000 cat images to the training directory
+for filename in image_files:
+    if os.path.isfile(os.path.join(dataset_dir,filename)):
+        if filename.startswith('dog') and dog_train_count < 8000:
+            shutil.move(os.path.join(dataset_dir, filename), os.path.join(dog_train_dir, filename))
+            dog_train_count += 1
+        elif filename.startswith('cat') and cat_train_count < 8000:
+            shutil.move(os.path.join(dataset_dir, filename), os.path.join(cat_train_dir, filename))
+            cat_train_count += 1
+
+# Move the remaining images to the validation directory
+for filename in image_files:
+    print(filename)
+    print(os.path.isfile(os.path.join(dataset_dir,filename))) 
+    if os.path.isfile(os.path.join(dataset_dir,filename)):
+        if filename.startswith('dog'):
+            shutil.move(os.path.join(dataset_dir, filename), os.path.join(dog_validation_dir, filename))
+        elif filename.startswith('cat'):
+            shutil.move(os.path.join(dataset_dir, filename), os.path.join(cat_validation_dir, filename))
+
+# c) Preprocess the images using data augmentation
+train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=40,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    fill_mode='nearest'
+)
+
+validation_datagen = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
+
+# Create image generators for training and validation
+train_generator = train_datagen.flow_from_directory(
+    train_dir,
+    target_size=(100, 100),
+    batch_size=32,
+    class_mode='binary'
+)
+
+validation_generator = validation_datagen.flow_from_directory(
+    validation_dir,
+    target_size=(100, 100),
+    batch_size=32,
+    class_mode='binary'
+)
+print(tf.config.list_physical_devices('GPU'))
+# d) Design and build TWO deep-learning models
+
+# Model 1: Fully-connected network model
+# model_fc = keras.Sequential([
+#     keras.layers.Flatten(input_shape=(150, 150, 3)),
+#     keras.layers.Dense(128, activation='relu'),
+#     keras.layers.Dense(1, activation='sigmoid')
+# ])
+
+model_fc = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
+    tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons and change activatio
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+
+
+# Model 2: Convolutional Neural Network (CNN) model
+model_cnn = tf.keras.Sequential([
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(100, 100, 3)),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')
+])
+
+# e) Set up optimization, learning rate, batch size, and epoch numbers for both models
+
+# Model 1
+model_fc.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=20,callbacks=[fc_tensorboard_callback])
+
+# Model 2
+model_cnn.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=20,callbacks=[cnn_tensorboard_callback])
+
+# f) Calculate and discuss accuracy for both models
+
+# Model 1 accuracy
+val_loss_fc, val_acc_fc = model_fc.evaluate(validation_generator)
+print(f"Model 1 Validation Accuracy: {val_acc_fc:.2f}")
+
+# Model 2 accuracy
+val_loss_cnn, val_acc_cnn = model_cnn.evaluate(validation_generator)
+print(f"Model 2 Validation Accuracy: {val_acc_cnn:.2f}")
+
+#i
