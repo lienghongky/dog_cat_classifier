@@ -151,4 +151,3 @@ model_cnn.save(f'models/cnn_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.
 # Model 2 accuracy
 val_loss_cnn, val_acc_cnn = model_cnn.evaluate(validation_generator)
 print(f"Model 2 Validation Accuracy: {val_acc_cnn:.2f}")
-#i
