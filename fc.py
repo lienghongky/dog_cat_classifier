@@ -8,7 +8,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 # Callaback
 fc_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 fc_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=fc_log_dir, histogram_freq=1)
-cnn_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+cnn_log_dir = "logs/fit/" + "cnn_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 cnn_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=cnn_log_dir, histogram_freq=1)
 
 # Early stopping callback
@@ -121,28 +121,36 @@ exit()
 #     keras.layers.Dense(1, activation='sigmoid')
 # ])
 
+# model_fc = tf.keras.Sequential([
+#     tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
+#     tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons and change activatio
+#     tf.keras.layers.Dense(1, activation='sigmoid')
+# ])
+
 model_fc = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
-    tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons and change activatio
+    tf.keras.layers.Dense(512, activation='relu'),  # Increase neurons
+    tf.keras.layers.Dropout(0.5),  # Regularization
+    tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons
+    tf.keras.layers.Dropout(0.5),  # Regularization
+    tf.keras.layers.Dense(128, activation='relu'),  # Increase neurons
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
-
-
 # e) Set up optimization, learning rate, batch size, and epoch numbers for both models
 
 # Model 1
 # Define a learning rate schedule (you can customize this schedule)
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=1e-2,  # Starting learning rate
+    initial_learning_rate=0.001,  # Starting learning rate
     decay_steps=10000,           # Learning rate decay steps
-    decay_rate=0.9               # Learning rate decay rate
+    decay_rate=0.09               # Learning rate decay rate
 )
 
 # Create an optimizer with the learning rate schedule
 optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
-model_fc.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=40,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
+model_fc.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=100,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
 # Save Model fc
 model_fc.save(f'models/fc_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
 
