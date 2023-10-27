@@ -150,7 +150,7 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
 optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
 
 model_fc.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
-history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=100,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
+history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=60,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
 # Save Model fc
 model_fc.save(f'models/fc_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
 
