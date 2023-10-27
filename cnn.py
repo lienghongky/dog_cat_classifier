@@ -118,20 +118,31 @@ exit()
 model_cnn = tf.keras.Sequential([
     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(100, 100, 3)),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    #add dropout
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
     tf.keras.layers.MaxPooling2D((2, 2)),
+    #add dropout
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
     tf.keras.layers.MaxPooling2D((2, 2)),
     tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation='relu'),
+    #add dropout
+    tf.keras.layers.Dropout(0.5),
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
 
 # e) Set up optimization, learning rate, batch size, and epoch numbers for both models
-
+learning_rate_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate=0.001,
+    decay_steps=1000,  # Adjust this value as needed
+    decay_rate=0.9
+)
+optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_schedule)
 
 # Model 2
-model_cnn.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+model_cnn.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=40,callbacks=[cnn_tensorboard_callback])
 # Save model cnn
 model_cnn.save(f'models/cnn_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
