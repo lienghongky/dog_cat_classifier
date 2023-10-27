@@ -5,10 +5,41 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import datetime
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+
+model_fc = tf.keras.Sequential([
+    # Input Layer
+    tf.keras.layers.Input(shape=(31, 39, 1)),
+    
+    # Layer 1 (Convolutional)
+    tf.keras.layers.Conv2D(20, (4, 4),use_bias=False, activation='relu', padding='valid'),
+    
+    # Layer 2 (Max Pooling)
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    
+    # Layer 3 (Convolutional)
+    tf.keras.layers.Conv2D(40, (3, 3),use_bias=False, activation='relu', padding='valid'),
+    
+    # Layer 4 (Max Pooling)
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    
+    # Layer 5 (Convolutional)
+    tf.keras.layers.Conv2D(60, (3, 3),use_bias=False, activation='relu', padding='valid'),
+    
+    # Layer 6 (Max Pooling)
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    
+    # Layer 7 (Convolutional)
+    tf.keras.layers.Conv2D(80, (2, 2),use_bias=False, activation='relu', padding='valid'),
+    
+])
+
+# Print the model 
+model_fc.summary()
+breakpoint()
 # Callaback
 fc_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 fc_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=fc_log_dir, histogram_freq=1)
-cnn_log_dir = "logs/fit/" + "fc_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+cnn_log_dir = "logs/fit/" + "cnn_" +datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 cnn_tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=cnn_log_dir, histogram_freq=1)
 
 # Early stopping callback
@@ -114,35 +145,47 @@ exit()
 """
 # d) Design and build TWO deep-learning models
 
-# Model 2: Convolutional Neural Network (CNN) model
-model_cnn = tf.keras.Sequential([
-    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(100, 100, 3)),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dropout(0.5),
-    tf.keras.layers.Dense(256, activation='relu'),
+# Model 1: Fully-connected network model
+# model_fc = keras.Sequential([
+#     keras.layers.Flatten(input_shape=(150, 150, 3)),
+#     keras.layers.Dense(128, activation='relu'),
+#     keras.layers.Dense(1, activation='sigmoid')
+# ])
+
+# model_fc = tf.keras.Sequential([
+#     tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
+#     tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons and change activatio
+#     tf.keras.layers.Dense(1, activation='sigmoid')
+# ])
+
+model_fc = tf.keras.Sequential([
+    tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
+    tf.keras.layers.Dense(512, activation='relu'),  # Increase neurons
+    tf.keras.layers.Dropout(0.2),  # Regularization
+    tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons
+    tf.keras.layers.Dropout(0.2),  # Regularization
+    tf.keras.layers.Dense(128, activation='relu'),  # Increase neurons
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
-
 # e) Set up optimization, learning rate, batch size, and epoch numbers for both models
-learning_rate_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=0.001,
-    decay_steps=1000,  # Adjust this value as needed
-    decay_rate=0.9
+
+# Model 1
+# Define a learning rate schedule (you can customize this schedule)
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate=0.001,  # Starting learning rate
+    decay_steps=10000,           # Learning rate decay steps
+    decay_rate=0.09               # Learning rate decay rate
 )
-optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_schedule)
 
-# Model 2
-model_cnn.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
-history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=80,callbacks=[cnn_tensorboard_callback])
-# Save model cnn
-model_cnn.save(f'models/cnn_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
-# f) Calculate and discuss accuracy for both models
+# Create an optimizer with the learning rate schedule
+optimizer = tf.keras.optimizers.Adam()
 
-# Model 2 accuracy
-val_loss_cnn, val_acc_cnn = model_cnn.evaluate(validation_generator)
-print(f"Model 2 Validation Accuracy: {val_acc_cnn:.2f}")
+model_fc.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
+history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=60,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
+# Save Model fc
+model_fc.save(f'models/fc_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
+
+# Model 1 accuracy
+val_loss_fc, val_acc_fc = model_fc.evaluate(validation_generator)
+print(f"Model 1 Validation Accuracy: {val_acc_fc:.2f}")
+

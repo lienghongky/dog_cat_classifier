@@ -147,7 +147,7 @@ lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
 )
 
 # Create an optimizer with the learning rate schedule
-optimizer = tf.keras.optimizers.Adam(learning_rate=lr_schedule)
+optimizer = tf.keras.optimizers.Adam()
 
 model_fc.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
 history_fc = model_fc.fit(train_generator, validation_data=validation_generator, epochs=60,callbacks=[fc_tensorboard_callback,early_stopping, checkpoint])
