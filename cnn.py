@@ -138,7 +138,7 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate_schedule)
 
 # Model 2
 model_cnn.compile(optimizer="adam", loss='binary_crossentropy', metrics=['accuracy'])
-history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=80,callbacks=[cnn_tensorboard_callback])
+history_cnn = model_cnn.fit(train_generator, validation_data=validation_generator, epochs=200,callbacks=[cnn_tensorboard_callback])
 # Save model cnn
 model_cnn.save(f'models/cnn_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.h5', save_format='h5') 
 # f) Calculate and discuss accuracy for both models
