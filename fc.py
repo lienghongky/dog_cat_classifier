@@ -130,9 +130,9 @@ exit()
 model_fc = tf.keras.Sequential([
     tf.keras.layers.Flatten(input_shape=(100, 100, 3)),
     tf.keras.layers.Dense(512, activation='relu'),  # Increase neurons
-    tf.keras.layers.Dropout(0.5),  # Regularization
+    tf.keras.layers.Dropout(0.2),  # Regularization
     tf.keras.layers.Dense(256, activation='relu'),  # Increase neurons
-    tf.keras.layers.Dropout(0.5),  # Regularization
+    tf.keras.layers.Dropout(0.2),  # Regularization
     tf.keras.layers.Dense(128, activation='relu'),  # Increase neurons
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
